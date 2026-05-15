@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Personal Card</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #080c18;
+    font-family: 'JetBrains Mono', monospace;
+    overflow: hidden;
+  }
+
+  #network {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+  }
+
+  .glow {
+    position: fixed;
+    bottom: -200px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(0, 136, 255, .15) 0%, rgba(102, 0, 255, .08) 40%, transparent 70%);
+    border-radius: 50%;
+    z-index: 0;
+  }
+
+  .circuit-grid {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    background-image:
+      linear-gradient(rgba(0, 136, 255, .04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 136, 255, .04) 1px, transparent 1px);
+    background-size: 50px 50px;
+    mask-image: linear-gradient(to bottom, transparent 10%, #000 50%, #000 100%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 10%, #000 50%, #000 100%);
+    pointer-events: none;
+  }
+
+  .circuit-grid::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(0, 136, 255, .06) 0, transparent 80px),
+      radial-gradient(circle at 70% 60%, rgba(102, 0, 255, .06) 0, transparent 100px),
+      radial-gradient(circle at 40% 80%, rgba(0, 200, 255, .04) 0, transparent 70px);
+    pointer-events: none;
+  }
+
+  .card {
+    position: relative;
+    z-index: 2;
+    width: 420px;
+    background: rgba(8, 12, 28, .92);
+    border: 1px solid rgba(0, 136, 255, .5);
+    box-shadow:
+      0 0 30px rgba(0, 136, 255, .15),
+      0 0 60px rgba(102, 0, 255, .08),
+      inset 0 0 30px rgba(0, 136, 255, .04);
+    font-size: 13px;
+    backdrop-filter: blur(2px);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(0, 136, 255, .3);
+    background: rgba(0, 136, 255, .04);
+  }
+
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+  .dot.r { background: #0088ff; box-shadow: 0 0 8px #0088ff; animation: pulse-dot 2s infinite; }
+  .dot.y { background: #6600ff; box-shadow: 0 0 8px #6600ff; animation: pulse-dot 2s infinite .3s; }
+  .dot.g { background: #00ccff; box-shadow: 0 0 8px #00ccff; animation: pulse-dot 2s infinite .6s; }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .4; }
+  }
+
+  .card-header .title {
+    margin-left: auto;
+    color: rgba(255, 255, 255, .2);
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  .card-body {
+    padding: 32px 28px;
+  }
+
+  .prompt {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .prompt .arrow {
+    color: #0088ff;
+    text-shadow: 0 0 10px #0088ff;
+    font-size: 14px;
+  }
+
+  .prompt .cmd {
+    color: #00ccff;
+    text-shadow: 0 0 10px #00ccff;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+
+  .cursor {
+    display: inline-block;
+    width: 8px;
+    height: 15px;
+    background: #0088ff;
+    box-shadow: 0 0 8px #0088ff;
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+
+  .name {
+    font-size: 20px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    position: relative;
+    margin-bottom: 4px;
+  }
+
+  .name .highlight {
+    color: #0088ff;
+    text-shadow: 0 0 20px #0088ff;
+  }
+
+  .name .bar {
+    display: inline-block;
+    width: 2px;
+    height: 22px;
+    background: #0088ff;
+    box-shadow: 0 0 10px #0088ff;
+    margin-left: 4px;
+    animation: blink 1s step-end infinite;
+    vertical-align: middle;
+  }
+
+  .sub {
+    color: rgba(255, 255, 255, .4);
+    font-size: 10px;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #0088ff, #6600ff, #00ccff, transparent);
+    margin-bottom: 24px;
+    box-shadow: 0 0 8px rgba(0, 136, 255, .5);
+  }
+
+  .line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+    font-size: 11px;
+    color: rgba(255, 255, 255, .3);
+  }
+
+  .line .key {
+    color: #0088ff;
+    text-shadow: 0 0 6px #0088ff;
+    min-width: 90px;
+  }
+
+  .line .key .bracket {
+    color: #6600ff;
+    text-shadow: 0 0 6px #6600ff;
+  }
+
+  .line .val {
+    color: rgba(255, 255, 255, .75);
+  }
+
+  .line .val::before {
+    content: '"';
+    color: #00ccff;
+  }
+
+  .line .val::after {
+    content: '"';
+    color: #00ccff;
+  }
+
+  .links {
+    display: flex;
+    gap: 8px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(0, 136, 255, .15);
+  }
+
+  .links a {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: rgba(255, 255, 255, .3);
+    border: 1px solid rgba(0, 136, 255, .15);
+    transition: all .3s;
+    font-family: 'JetBrains Mono', monospace;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .links a::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 136, 255, .1), transparent);
+    transition: left .5s;
+  }
+
+  .links a:hover::before {
+    left: 100%;
+  }
+
+  .links a:hover {
+    color: #00ccff;
+    border-color: #00ccff;
+    box-shadow: 0 0 20px rgba(0, 204, 255, .15);
+    background: rgba(0, 204, 255, .05);
+  }
+
+  .status-bar {
+    padding: 6px 14px;
+    border-top: 1px solid rgba(0, 136, 255, .3);
+    display: flex;
+    justify-content: space-between;
+    font-size: 9px;
+    color: rgba(255, 255, 255, .15);
+    letter-spacing: 1px;
+    background: rgba(0, 136, 255, .03);
+  }
+
+  .status-bar .ok {
+    color: #00ccff;
+    text-shadow: 0 0 6px #00ccff;
+  }
+
+  .status-bar .warn {
+    color: #6600ff;
+    text-shadow: 0 0 6px #6600ff;
+  }
+</style>
+</head>
+<body>
+<canvas id="network"></canvas>
+<div class="glow"></div>
+<div class="circuit-grid"></div>
+
+<div class="card">
+  <div class="card-header">
+    <span class="dot r"></span>
+    <span class="dot y"></span>
+    <span class="dot g"></span>
+    <span class="title">AI::agent</span>
+  </div>
+  <div class="card-body">
+    <div class="prompt">
+      <span class="arrow">&#9656;</span>
+      <span class="cmd">~/$ identify</span>
+      <span class="cursor"></span>
+    </div>
+
+    <div class="name">
+      <span class="highlight">M</span>ARC <span class="highlight">C</span>ASIN
+      <span class="bar"></span>
+    </div>
+    <div class="sub">Cloud Architect</div>
+    <div class="divider"></div>
+
+    <div class="line">
+      <span class="key"><span class="bracket">[</span>email<span class="bracket">]</span></span>
+      <span class="val">mcasin@gmail.com</span>
+    </div>
+    <div class="line">
+      <span class="key"><span class="bracket">[</span>location<span class="bracket">]</span></span>
+      <span class="val">Barcelona, Spain</span>
+    </div>
+    <div class="line">
+      <span class="key"><span class="bracket">[</span>status<span class="bracket">]</span></span>
+      <span class="val" style="color: #00ccff;">system.online</span>
+    </div>
+
+    <div class="links">
+      <a href="https://github.com/mcasin">&#91;github&#93;</a>
+      <a href="https://www.linkedin.com/in/marc-casin-martinez-a80a7332/">&#91;linkedin&#93;</a>
+    </div>
+  </div>
+  <div class="status-bar">
+    <span class="ok">&#9679; neural.link active</span>
+    <span>latency: 4ms</span>
+    <span>model: v2.0</span>
+  </div>
+</div>
+
+<script>
+  const canvas = document.getElementById('network');
+  const ctx = canvas.getContext('2d');
+  let nodes = [];
+  let mouse = { x: 0, y: 0 };
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    initNodes();
+  }
+
+  function initNodes() {
+    nodes = [];
+    const count = Math.floor((canvas.width * canvas.height) / 25000);
+    for (let i = 0; i < count; i++) {
+      nodes.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - .5) * .3,
+        vy: (Math.random() - .5) * .3,
+        r: Math.random() * 2 + 1
+      });
+    }
+  }
+
+  resize();
+  window.addEventListener('resize', resize);
+  window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+
+  function draw() {
+    ctx.fillStyle = 'rgba(8, 12, 28, .15)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    for (let i = 0; i < nodes.length; i++) {
+      const n = nodes[i];
+      n.x += n.vx;
+      n.y += n.vy;
+      if (n.x < 0 || n.x > canvas.width) n.vx *= -1;
+      if (n.y < 0 || n.y > canvas.height) n.vy *= -1;
+
+      const dx = mouse.x - n.x;
+      const dy = mouse.y - n.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 150) {
+        n.x -= dx * .005;
+        n.y -= dy * .005;
+      }
+
+      for (let j = i + 1; j < nodes.length; j++) {
+        const m = nodes[j];
+        const dx = n.x - m.x;
+        const dy = n.y - m.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 120) {
+          ctx.strokeStyle = `rgba(0, 136, 255, ${(1 - dist / 120) * .3})`;
+          ctx.lineWidth = .5;
+          ctx.beginPath();
+          ctx.moveTo(n.x, n.y);
+          ctx.lineTo(m.x, m.y);
+          ctx.stroke();
+        }
+      }
+
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(0, 136, 255, ${n.r / 3})`;
+      ctx.shadowColor = '#0088ff';
+      ctx.shadowBlur = 6;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+  }
+
+  setInterval(draw, 30);
+</script>
+</body>
+</html>
