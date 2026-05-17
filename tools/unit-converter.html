@@ -5,253 +5,204 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Conversor de Unidades</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg: #f1f5f9;
-    --card-bg: #fff;
-    --card-shadow: rgba(0,0,0,.08);
-    --text: #0f172a;
-    --label: #334155;
-    --label-span: #64748b;
-    --input-bg: #f8fafc;
-    --input-border: #e2e8f0;
-    --input-focus-bg: #fff;
-    --btn-bg: #f8fafc;
-    --btn-text: #334155;
-    --btn-border: #e2e8f0;
-    --btn-hover: #93c5fd;
-    --accent: #3b82f6;
-    --accent-text: #fff;
-    --slider-track: #e2e8f0;
-    --slider-thumb-border: #fff;
-    --range-label: #94a3b8;
-    --results-bg: #f8fafc;
-    --row-border: #e2e8f0;
-    --row-label: #64748b;
-    --row-value: #0f172a;
-    --positive: #16a34a;
-    --disclaimer: #94a3b8;
-    --toggle-bg: #e2e8f0;
-    --toggle-color: #64748b;
-  }
-  [data-theme="dark"] {
-    --bg: #0f172a;
-    --card-bg: #1e293b;
-    --card-shadow: rgba(0,0,0,.4);
-    --text: #f1f5f9;
-    --label: #cbd5e1;
-    --label-span: #94a3b8;
-    --input-bg: #334155;
-    --input-border: #475569;
-    --input-focus-bg: #334155;
-    --btn-bg: #334155;
-    --btn-text: #cbd5e1;
-    --btn-border: #475569;
-    --btn-hover: #3b82f6;
-    --accent: #3b82f6;
-    --accent-text: #fff;
-    --slider-track: #475569;
-    --slider-thumb-border: #1e293b;
-    --range-label: #64748b;
-    --results-bg: #0f172a;
-    --row-border: #334155;
-    --row-label: #94a3b8;
-    --row-value: #f1f5f9;
-    --positive: #4ade80;
-    --disclaimer: #64748b;
-    --toggle-bg: #334155;
-    --toggle-color: #f1f5f9;
-  }
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: var(--bg);
-    display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px;
-    transition: background .3s;
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: #080c18; font-family: 'JetBrains Mono', monospace; overflow-x: hidden; overflow-y: auto; padding: 20px;
+  }
+  #network { position: fixed; inset: 0; z-index: 0; }
+  .glow {
+    position: fixed; bottom: -200px; left: 50%; transform: translateX(-50%);
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(0,136,255,.15) 0%, rgba(102,0,255,.08) 40%, transparent 70%);
+    border-radius: 50%; z-index: 0;
+  }
+  .circuit-grid {
+    position: fixed; inset: 0; z-index: 1; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(0,136,255,.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,136,255,.04) 1px, transparent 1px);
+    background-size: 50px 50px;
+    mask-image: linear-gradient(to bottom, transparent 10%, #000 50%, #000 100%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 10%, #000 50%, #000 100%);
+  }
+  .circuit-grid::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(0,136,255,.06) 0, transparent 80px),
+      radial-gradient(circle at 70% 60%, rgba(102,0,255,.06) 0, transparent 100px),
+      radial-gradient(circle at 40% 80%, rgba(0,200,255,.04) 0, transparent 70px);
   }
   .card {
-    background: var(--card-bg); border-radius: 20px; padding: 40px; max-width: 520px; width: 100%;
-    box-shadow: 0 4px 24px var(--card-shadow); transition: background .3s;
+    position: relative; z-index: 2; width: 100%; max-width: 680px;
+    background: rgba(8,12,28,.92);
+    border: 1px solid rgba(0,136,255,.5);
+    box-shadow: 0 0 30px rgba(0,136,255,.15), 0 0 60px rgba(102,0,255,.08), inset 0 0 30px rgba(0,136,255,.04);
+    backdrop-filter: blur(2px);
   }
-  .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
-  h1 { font-size: 24px; font-weight: 700; color: var(--text); margin: 0; }
-  .head-buttons { display: flex; gap: 8px; }
-  #langToggle {
-    background: var(--toggle-bg); border: none; border-radius: 10px; width: 40px; height: 40px;
-    font-size: 13px; font-weight: 700; cursor: pointer; color: var(--toggle-color); transition: .2s;
-    display: flex; align-items: center; justify-content: center;
+  .card-header {
+    display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+    border-bottom: 1px solid rgba(0,136,255,.3); background: rgba(0,136,255,.04);
   }
-  #langToggle:hover { opacity: .8; }
-  #themeToggle {
-    background: var(--toggle-bg); border: none; border-radius: 10px; width: 40px; height: 40px;
-    font-size: 20px; cursor: pointer; color: var(--toggle-color); transition: .2s;
-    display: flex; align-items: center; justify-content: center;
+  .dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .dot.r { background: #0088ff; box-shadow: 0 0 10px #0088ff; animation: pulse-dot 2s infinite; }
+  .dot.y { background: #6600ff; box-shadow: 0 0 10px #6600ff; animation: pulse-dot 2s infinite .3s; }
+  .dot.g { background: #00ccff; box-shadow: 0 0 10px #00ccff; animation: pulse-dot 2s infinite .6s; }
+  @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+  .header-left { display: flex; align-items: center; gap: 8px; }
+  .header-right { display: flex; align-items: center; gap: 8px; }
+  .card-header .title {
+    flex: 1; text-align: center; color: rgba(255,255,255,.45); font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
   }
-  #themeToggle:hover { opacity: .8; }
-  .head-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
-  .head-left h1 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .back-btn {
-    background: var(--toggle-bg); border: none; border-radius: 10px; width: 36px; height: 36px;
-    font-size: 16px; cursor: pointer; color: var(--toggle-color); transition: .2s; text-decoration: none;
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  .back-btn, .header-btn {
+    background: none; border: 1px solid rgba(0,136,255,.15); width: 34px; height: 34px;
+    font-size: 14px; cursor: pointer; color: rgba(255,255,255,.75); transition: all .3s; text-decoration: none;
+    display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace;
   }
-  .back-btn:hover { opacity: .8; }
+  .back-btn:hover, .header-btn:hover {
+    color: #00ccff; border-color: #00ccff; box-shadow: 0 0 20px rgba(0,204,255,.15); background: rgba(0,204,255,.05);
+  }
+  .card-body { padding: 32px 28px; }
   .field { margin-bottom: 24px; }
-  label { display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; color: var(--label); margin-bottom: 6px; }
-  label span { font-weight: 400; color: var(--label-span); }
+  label {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 12px; font-weight: 600; color: rgba(255,255,255,.8); margin-bottom: 8px; letter-spacing: 1.5px; text-transform: uppercase;
+  }
+  label span { font-weight: 400; color: rgba(255,255,255,.65); }
   .btn-group { display: flex; gap: 8px; }
   .btn-group button {
-    flex: 1; padding: 10px; font-size: 13px; font-weight: 600; border: 1.5px solid var(--btn-border); border-radius: 10px;
-    background: var(--btn-bg); color: var(--btn-text); cursor: pointer; transition: all .2s;
+    flex: 1; padding: 12px 8px; font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+    border: 1px solid rgba(0,136,255,.15); background: transparent; color: rgba(255,255,255,.8);
+    cursor: pointer; transition: all .3s; font-family: 'JetBrains Mono', monospace;
   }
-  .btn-group button:hover { border-color: var(--btn-hover); }
-  .btn-group button.active { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
-  .input-row { display: flex; gap: 12px; align-items: stretch; }
+  .btn-group button:hover { color: #00ccff; border-color: #00ccff; box-shadow: 0 0 20px rgba(0,204,255,.15); background: rgba(0,204,255,.05); }
+  .btn-group button.active { color: #00ccff; border-color: #00ccff; box-shadow: 0 0 20px rgba(0,204,255,.15); background: rgba(0,204,255,.05); }
+  .input-row { display: flex; gap: 10px; align-items: stretch; }
   .input-row input[type="number"] {
-    flex: 1; padding: 12px 14px; font-size: 16px; border: 1.5px solid var(--input-border); border-radius: 10px;
-    background: var(--input-bg); transition: border-color .2s, background .3s; outline: none; color: var(--text); min-width: 0;
+    flex: 1; padding: 12px 14px; font-size: 16px; border: 1px solid rgba(0,136,255,.2); border-radius: 0;
+    background: rgba(0,136,255,.05); color: rgba(255,255,255,.85); outline: none; min-width: 0;
+    font-family: 'JetBrains Mono', monospace; transition: border-color .2s, box-shadow .2s;
   }
-  .input-row input[type="number"]:focus { border-color: var(--accent); background: var(--input-focus-bg); }
+  .input-row input[type="number"]:focus { border-color: #0088ff; box-shadow: 0 0 10px rgba(0,136,255,.2); }
   .input-row input[type="number"]::-webkit-inner-spin-button { opacity: .5; }
   select {
-    padding: 12px 14px; font-size: 15px; border: 1.5px solid var(--input-border); border-radius: 10px;
-    background: var(--input-bg); transition: border-color .2s, background .3s; outline: none; color: var(--text);
-    cursor: pointer; font-family: inherit; min-width: 120px;
+    padding: 12px 12px; font-size: 14px; border: 1px solid rgba(0,136,255,.2); border-radius: 0;
+    background: rgba(0,136,255,.05); color: rgba(255,255,255,.8); outline: none; cursor: pointer;
+    font-family: 'JetBrains Mono', monospace; min-width: 120px; transition: border-color .2s, box-shadow .2s;
   }
-  select:focus { border-color: var(--accent); background: var(--input-focus-bg); }
-  .results { background: var(--results-bg); border-radius: 12px; padding: 20px; margin-top: 28px; transition: background .3s; }
-  .row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 15px; }
-  .row + .row { border-top: 1px solid var(--row-border); }
-  .row .label { color: var(--row-label); }
-  .row .value { font-weight: 600; color: var(--row-value); text-align: right; }
-  .row.highlight .value { color: var(--positive); font-size: 20px; }
-  .disclaimer { font-size: 12px; color: var(--disclaimer); margin-top: 16px; text-align: center; line-height: 1.5; }
-  @media (max-width: 500px) {
-    .card { padding: 24px; }
-    .btn-group { flex-wrap: wrap; }
-    .btn-group button { font-size: 12px; padding: 8px 6px; min-width: calc(50% - 4px); }
+  select:focus { border-color: #0088ff; box-shadow: 0 0 10px rgba(0,136,255,.2); }
+  .results { border: 1px solid rgba(0,136,255,.1); background: rgba(0,136,255,.03); padding: 20px; margin-top: 24px; }
+  .row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; }
+  .row + .row { border-top: 1px solid rgba(0,136,255,.06); }
+  .row .label { color: rgba(255,255,255,.75); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
+  .row .value { font-weight: 600; color: rgba(255,255,255,.9); text-align: right; }
+  .row.highlight .value { color: #00ccff; font-size: 20px; text-shadow: 0 0 12px #00ccff; }
+  .disclaimer { font-size: 11px; color: rgba(255,255,255,.65); margin-top: 16px; text-align: center; line-height: 1.5; letter-spacing: .5px; }
+  .status-bar { padding: 8px 16px; border-top: 1px solid rgba(0,136,255,.3); display: flex; justify-content: space-between; font-size: 11px; color: rgba(255,255,255,.55); letter-spacing: 1px; background: rgba(0,136,255,.03); }
+  .status-bar .ok { color: #00ccff; text-shadow: 0 0 6px #00ccff; }
+  @media (max-width: 600px) {
+    body { padding: 12px; }
+    .card-body { padding: 20px 16px; }
+    .back-btn, .header-btn { width: 30px; height: 30px; font-size: 12px; }
+    label { font-size: 11px; }
     .input-row { flex-direction: column; }
-    select { min-width: 100%; }
+    .input-row input[type="number"] { padding: 10px 12px; font-size: 15px; }
+    select { min-width: 100%; padding: 10px 10px; font-size: 13px; }
+    .btn-group { flex-wrap: wrap; }
+    .btn-group button { padding: 10px 6px; font-size: 10px; min-width: calc(50% - 4px); }
+    .row { font-size: 13px; }
+    .row .label { font-size: 10px; }
+    .row.highlight .value { font-size: 17px; }
+    .results { padding: 14px; }
   }
 </style>
 </head>
 <body>
+<canvas id="network"></canvas>
+<div class="glow"></div>
+<div class="circuit-grid"></div>
+
 <div class="card">
-  <div class="head">
-    <div class="head-left">
+  <div class="card-header">
+    <div class="header-left">
       <a class="back-btn" href="index.html" aria-label="Volver">←</a>
-      <h1 data-i18n="title">Conversor de Unidades</h1>
+      <span class="dot r"></span>
+      <span class="dot y"></span>
+      <span class="dot g"></span>
     </div>
-    <div class="head-buttons">
-      <button id="langToggle" aria-label="Cambiar idioma">ES</button>
-      <button id="themeToggle" aria-label="Cambiar tema">🌙</button>
-    </div>
-  </div>
-
-  <div class="field">
-    <label data-i18n="category">Categoría</label>
-    <div class="btn-group" id="category">
-      <button type="button" data-cat="temp" class="active" data-i18n="catTemp">Temperatura</button>
-      <button type="button" data-cat="weight" data-i18n="catWeight">Peso</button>
-      <button type="button" data-cat="length" data-i18n="catLength">Longitud</button>
-      <button type="button" data-cat="volume" data-i18n="catVolume">Volumen</button>
+    <span class="title">unit::converter</span>
+    <div class="header-right">
+      <button id="langToggle" class="header-btn" aria-label="Cambiar idioma">ES</button>
     </div>
   </div>
+  <div class="card-body">
 
-  <div class="field">
-    <label data-i18n="value">Valor</label>
-    <div class="input-row">
-      <input type="number" id="value" value="100" step="any">
-      <select id="unit"></select>
+    <div class="field">
+      <label data-i18n="category">Categoría</label>
+      <div class="btn-group" id="category">
+        <button type="button" data-cat="temp" class="active" data-i18n="catTemp">Temperatura</button>
+        <button type="button" data-cat="weight" data-i18n="catWeight">Peso</button>
+        <button type="button" data-cat="length" data-i18n="catLength">Longitud</button>
+        <button type="button" data-cat="volume" data-i18n="catVolume">Volumen</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label data-i18n="value">Valor</label>
+      <div class="input-row">
+        <input type="number" id="value" value="100" step="any">
+        <select id="unit"></select>
+      </div>
+    </div>
+
+    <div class="results" id="results"></div>
+
+    <div class="disclaimer" data-i18n="disclaimer">
+      Los resultados se redondean a 4 decimales como máximo.
     </div>
   </div>
-
-  <div class="results" id="results"></div>
-
-  <div class="disclaimer" data-i18n="disclaimer">
-    Los resultados se redondean a 4 decimales como máximo.
+  <div class="status-bar">
+    <span class="ok">&#9679; convert.ready</span>
+    <span>SI</span>
+    <span>imperial</span>
   </div>
 </div>
 
 <script>
   const i18n = {
     es: {
-      title: 'Conversor de Unidades',
-      category: 'Categoría',
-      catTemp: 'Temperatura',
-      catWeight: 'Peso',
-      catLength: 'Longitud',
-      catVolume: 'Volumen',
-      value: 'Valor',
-      numError: 'Introduzca un valor numérico',
+      category: 'Categoría', catTemp: 'Temperatura', catWeight: 'Peso', catLength: 'Longitud', catVolume: 'Volumen',
+      value: 'Valor', numError: 'Introduzca un valor numérico',
       disclaimer: 'Los resultados se redondean a 4 decimales como máximo.',
-      unitC: 'Celsius',
-      unitF: 'Fahrenheit',
-      unitK: 'Kelvin',
-      unitKg: 'Kilogramo',
-      unitG: 'Gramo',
-      unitLb: 'Libra',
-      unitOz: 'Onza',
-      unitSt: 'Stone',
-      unitKm: 'Kilómetro',
-      unitM: 'Metro',
-      unitCm: 'Centímetro',
-      unitMm: 'Milímetro',
-      unitMi: 'Milla',
-      unitYd: 'Yarda',
-      unitFt: 'Pie',
-      unitIn: 'Pulgada',
-      unitL: 'Litro',
-      unitMl: 'Mililitro',
-      unitM3: 'Metro cúbico',
-      unitGal: 'Galón',
-      unitQt: 'Cuarto',
-      unitCup: 'Taza',
-      unitFloz: 'Onza líquida',
+      unitC: 'Celsius', unitF: 'Fahrenheit', unitK: 'Kelvin',
+      unitKg: 'Kilogramo', unitG: 'Gramo', unitLb: 'Libra', unitOz: 'Onza', unitSt: 'Stone',
+      unitKm: 'Kilómetro', unitM: 'Metro', unitCm: 'Centímetro', unitMm: 'Milímetro',
+      unitMi: 'Milla', unitYd: 'Yarda', unitFt: 'Pie', unitIn: 'Pulgada',
+      unitL: 'Litro', unitMl: 'Mililitro', unitM3: 'Metro cúbico',
+      unitGal: 'Galón', unitQt: 'Cuarto', unitCup: 'Taza', unitFloz: 'Onza líquida',
     },
     en: {
-      title: 'Unit Converter',
-      category: 'Category',
-      catTemp: 'Temperature',
-      catWeight: 'Weight',
-      catLength: 'Length',
-      catVolume: 'Volume',
-      value: 'Value',
-      numError: 'Enter a numeric value',
+      category: 'Category', catTemp: 'Temperature', catWeight: 'Weight', catLength: 'Length', catVolume: 'Volume',
+      value: 'Value', numError: 'Enter a numeric value',
       disclaimer: 'Results are rounded to 4 decimal places maximum.',
-      unitC: 'Celsius',
-      unitF: 'Fahrenheit',
-      unitK: 'Kelvin',
-      unitKg: 'Kilogram',
-      unitG: 'Gram',
-      unitLb: 'Pound',
-      unitOz: 'Ounce',
-      unitSt: 'Stone',
-      unitKm: 'Kilometer',
-      unitM: 'Meter',
-      unitCm: 'Centimeter',
-      unitMm: 'Millimeter',
-      unitMi: 'Mile',
-      unitYd: 'Yard',
-      unitFt: 'Foot',
-      unitIn: 'Inch',
-      unitL: 'Liter',
-      unitMl: 'Milliliter',
-      unitM3: 'Cubic meter',
-      unitGal: 'Gallon',
-      unitQt: 'Quart',
-      unitCup: 'Cup',
-      unitFloz: 'Fluid ounce',
+      unitC: 'Celsius', unitF: 'Fahrenheit', unitK: 'Kelvin',
+      unitKg: 'Kilogram', unitG: 'Gram', unitLb: 'Pound', unitOz: 'Ounce', unitSt: 'Stone',
+      unitKm: 'Kilometer', unitM: 'Meter', unitCm: 'Centimeter', unitMm: 'Millimeter',
+      unitMi: 'Mile', unitYd: 'Yard', unitFt: 'Foot', unitIn: 'Inch',
+      unitL: 'Liter', unitMl: 'Milliliter', unitM3: 'Cubic meter',
+      unitGal: 'Gallon', unitQt: 'Quart', unitCup: 'Cup', unitFloz: 'Fluid ounce',
     },
   };
 
   let lang = localStorage.getItem('lang') || 'es';
+  function t(key) { return (i18n[lang] && i18n[lang][key]) || i18n['es'][key] || key; }
+  function getLocale() { return lang === 'es' ? 'es-ES' : 'en-US'; }
 
-  function t(key) {
-    return (i18n[lang] && i18n[lang][key]) || i18n['es'][key] || key;
-  }
-
-  function getLocale() {
-    return lang === 'es' ? 'es-ES' : 'en-US';
+  function applyLang() {
+    document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+    langToggle.textContent = lang === 'es' ? 'EN' : 'ES';
+    populateUnits(); calc();
   }
 
   const catBtns = document.querySelectorAll('#category button');
@@ -314,34 +265,22 @@
 
   function fmt(v) {
     if (v === Infinity || isNaN(v)) return '--';
-    const s = v.toFixed(4);
-    const trimmed = parseFloat(s);
+    const trimmed = parseFloat(v.toFixed(4));
     return trimmed.toLocaleString(getLocale(), { minimumFractionDigits: 0, maximumFractionDigits: 4 });
   }
 
   function calc() {
     const val = parseFloat(valueEl.value);
-    if (isNaN(val)) {
-      resultsEl.innerHTML = '<div class="row"><span class="label">' + t('numError') + '</span></div>';
-      return;
-    }
-
+    if (isNaN(val)) { resultsEl.innerHTML = '<div class="row"><span class="label">' + t('numError') + '</span></div>'; return; }
     const cat = units[currentCat];
     const fromUnit = cat.list.find(u => u.id === unitEl.value);
     if (!fromUnit) return;
-
     const baseVal = fromUnit.base(val);
-
     const rows = cat.list.map(u => {
       const converted = u.from(baseVal);
       const isSource = u.id === fromUnit.id;
-      const cls = isSource ? 'highlight' : '';
-      return '<div class="row' + (cls ? ' ' + cls : '') + '">' +
-        '<span class="label">' + t(u.labelKey) + '</span>' +
-        '<span class="value">' + fmt(converted) + '</span>' +
-        '</div>';
+      return '<div class="row' + (isSource ? ' highlight' : '') + '"><span class="label">' + t(u.labelKey) + '</span><span class="value">' + fmt(converted) + '</span></div>';
     });
-
     resultsEl.innerHTML = rows.join('');
   }
 
@@ -350,49 +289,52 @@
       catBtns.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       currentCat = btn.dataset.cat;
-      populateUnits();
-      calc();
+      populateUnits(); calc();
     });
   });
 
   unitEl.addEventListener('change', calc);
   valueEl.addEventListener('input', calc);
-
-  populateUnits();
-  calc();
-
-  function applyLang() {
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-      el.textContent = t(el.dataset.i18n);
-    });
-    langToggle.textContent = lang === 'es' ? 'EN' : 'ES';
-    populateUnits();
-    calc();
-  }
+  populateUnits(); calc();
 
   const langToggle = document.getElementById('langToggle');
-  langToggle.addEventListener('click', () => {
-    lang = lang === 'es' ? 'en' : 'es';
-    localStorage.setItem('lang', lang);
-    applyLang();
-  });
-
-  const themeToggle = document.getElementById('themeToggle');
-  function setTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
-    themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
-    localStorage.setItem('theme', theme);
-  }
-  themeToggle.addEventListener('click', () => {
-    const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-    setTheme(next);
-  });
-  const saved = localStorage.getItem('theme');
-  if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-    setTheme('dark');
-  }
-
+  langToggle.addEventListener('click', () => { lang = lang === 'es' ? 'en' : 'es'; localStorage.setItem('lang', lang); applyLang(); });
   applyLang();
+
+  const canvas = document.getElementById('network');
+  const ctx = canvas.getContext('2d');
+  let nodes = [];
+  let mouse = { x: 0, y: 0 };
+  function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; initNodes(); }
+  function initNodes() {
+    nodes = [];
+    const count = Math.floor((canvas.width * canvas.height) / 25000);
+    for (let i = 0; i < count; i++) { nodes.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, vx: (Math.random() - .5) * .3, vy: (Math.random() - .5) * .3, r: Math.random() * 2 + 1 }); }
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+  function draw() {
+    ctx.fillStyle = 'rgba(8, 12, 28, .15)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    for (let i = 0; i < nodes.length; i++) {
+      const n = nodes[i]; n.x += n.vx; n.y += n.vy;
+      if (n.x < 0 || n.x > canvas.width) n.vx *= -1;
+      if (n.y < 0 || n.y > canvas.height) n.vy *= -1;
+      const dx = mouse.x - n.x; const dy = mouse.y - n.y; const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 150) { n.x -= dx * .005; n.y -= dy * .005; }
+      for (let j = i + 1; j < nodes.length; j++) {
+        const m = nodes[j]; const dx = n.x - m.x; const dy = n.y - m.y; const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 120) {
+          ctx.strokeStyle = `rgba(0, 136, 255, ${(1 - dist / 120) * .3})`;
+          ctx.lineWidth = .5; ctx.beginPath(); ctx.moveTo(n.x, n.y); ctx.lineTo(m.x, m.y); ctx.stroke();
+        }
+      }
+      ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(0, 136, 255, ${n.r / 3})`; ctx.shadowColor = '#0088ff'; ctx.shadowBlur = 6; ctx.fill(); ctx.shadowBlur = 0;
+    }
+  }
+  setInterval(draw, 30);
 </script>
 </body>
 </html>
