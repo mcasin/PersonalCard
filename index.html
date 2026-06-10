@@ -3,227 +3,579 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Personal Card</title>
+<title>Marc Casin — Cloud Architect</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&display=swap');
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    min-height: 100vh; display: flex; align-items: center; justify-content: center;
-    background: #080c18; font-family: 'JetBrains Mono', monospace; overflow-x: hidden; overflow-y: auto; padding: 20px;
-  }
-  #network { position: fixed; inset: 0; z-index: 0; }
-  .glow {
-    position: fixed; bottom: -200px; left: 50%; transform: translateX(-50%);
-    width: 600px; height: 600px;
-    background: radial-gradient(circle, rgba(0,136,255,.15) 0%, rgba(102,0,255,.08) 40%, transparent 70%);
-    border-radius: 50%; z-index: 0;
-  }
-  .circuit-grid {
-    position: fixed; inset: 0; z-index: 1; pointer-events: none;
-    background-image:
-      linear-gradient(rgba(0,136,255,.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0,136,255,.04) 1px, transparent 1px);
-    background-size: 50px 50px;
-    mask-image: linear-gradient(to bottom, transparent 10%, #000 50%, #000 100%);
-    -webkit-mask-image: linear-gradient(to bottom, transparent 10%, #000 50%, #000 100%);
-  }
-  .circuit-grid::after {
-    content: ''; position: absolute; inset: 0; pointer-events: none;
-    background-image:
-      radial-gradient(circle at 20% 30%, rgba(0,136,255,.06) 0, transparent 80px),
-      radial-gradient(circle at 70% 60%, rgba(102,0,255,.06) 0, transparent 100px),
-      radial-gradient(circle at 40% 80%, rgba(0,200,255,.04) 0, transparent 70px);
-  }
-  .card {
-    position: relative; z-index: 2; width: 100%; max-width: 520px;
-    background: rgba(8,12,28,.92);
-    border: 1px solid rgba(0,136,255,.5);
-    box-shadow: 0 0 30px rgba(0,136,255,.15), 0 0 60px rgba(102,0,255,.08), inset 0 0 30px rgba(0,136,255,.04);
-    backdrop-filter: blur(2px);
-  }
-  .card-header {
-    display: flex; align-items: center; gap: 10px; padding: 12px 16px;
-    border-bottom: 1px solid rgba(0,136,255,.3); background: rgba(0,136,255,.04);
-  }
-  .dot { width: 12px; height: 12px; border-radius: 50%; }
-  .dot.r { background: #0088ff; box-shadow: 0 0 10px #0088ff; animation: pulse-dot 2s infinite; }
-  .dot.y { background: #6600ff; box-shadow: 0 0 10px #6600ff; animation: pulse-dot 2s infinite .3s; }
-  .dot.g { background: #00ccff; box-shadow: 0 0 10px #00ccff; animation: pulse-dot 2s infinite .6s; }
-  @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
-  .card-header .title {
-    margin-left: auto; color: rgba(255,255,255,.5); font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
-  }
-  .card-body { padding: 36px 32px; }
-  .prompt { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; }
-  .prompt .arrow { color: #0088ff; text-shadow: 0 0 10px #0088ff; font-size: 16px; }
-  .prompt .cmd { color: #00ccff; text-shadow: 0 0 10px #00ccff; font-weight: 700; letter-spacing: 1px; font-size: 15px; }
-  .cursor { display: inline-block; width: 10px; height: 18px; background: #0088ff; box-shadow: 0 0 10px #0088ff; animation: blink 1s step-end infinite; }
-  @keyframes blink { 50% { opacity: 0; } }
-  .name { font-size: 26px; font-weight: 800; color: #fff; letter-spacing: 6px; text-transform: uppercase; position: relative; margin-bottom: 6px; }
-  .name .highlight { color: #0088ff; text-shadow: 0 0 20px #0088ff; }
-  .name .bar { display: inline-block; width: 3px; height: 26px; background: #0088ff; box-shadow: 0 0 12px #0088ff; margin-left: 4px; animation: blink 1s step-end infinite; vertical-align: middle; }
-  .sub { color: rgba(255,255,255,.75); font-size: 13px; letter-spacing: 6px; text-transform: uppercase; margin-bottom: 28px; }
-  .divider { height: 1px; background: linear-gradient(90deg, transparent, #0088ff, #6600ff, #00ccff, transparent); margin-bottom: 28px; box-shadow: 0 0 10px rgba(0,136,255,.5); }
-  .line { display: flex; align-items: center; gap: 12px; padding: 8px 0; font-size: 15px; color: rgba(255,255,255,.75); }
-  .line .key { color: #0088ff; text-shadow: 0 0 6px #0088ff; min-width: 100px; }
-  .line .key .bracket { color: #6600ff; text-shadow: 0 0 6px #6600ff; }
-  .line .val { color: rgba(255,255,255,.9); }
-  .line .val::before { content: '"'; color: #00ccff; }
-  .line .val::after { content: '"'; color: #00ccff; }
-  .links { display: flex; gap: 10px; margin-top: 24px; padding-top: 24px; border-top: 1px solid rgba(0,136,255,.15); }
-  .links a {
-    flex: 1; padding: 14px; text-align: center; font-size: 13px; letter-spacing: 2px; text-transform: uppercase;
-    text-decoration: none; color: rgba(255,255,255,.8); border: 1px solid rgba(0,136,255,.15);
-    transition: all .3s; font-family: 'JetBrains Mono', monospace; position: relative; overflow: hidden;
-  }
-  .links a::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(0,136,255,.1), transparent); transition: left .5s; }
-  .links a:hover::before { left: 100%; }
-  .links a:hover { color: #00ccff; border-color: #00ccff; box-shadow: 0 0 20px rgba(0,204,255,.15); background: rgba(0,204,255,.05); }
-  .status-bar { padding: 8px 16px; border-top: 1px solid rgba(0,136,255,.3); display: flex; justify-content: space-between; font-size: 11px; color: rgba(255,255,255,.5); letter-spacing: 1px; background: rgba(0,136,255,.03); }
-  .status-bar .ok { color: #00ccff; text-shadow: 0 0 6px #00ccff; }
-  .status-bar .warn { color: #6600ff; text-shadow: 0 0 6px #6600ff; }
-  @media (max-width: 560px) {
-    body { padding: 12px; }
-    .card-body { padding: 24px 20px; }
-    .name { font-size: 22px; letter-spacing: 4px; }
-    .sub { font-size: 11px; letter-spacing: 4px; }
-    .line { font-size: 13px; gap: 8px; }
-    .line .key { min-width: 80px; }
-    .links { flex-direction: column; }
-    .links a { padding: 12px; font-size: 12px; }
-    .card-header { padding: 10px 12px; gap: 8px; }
-    .dot { width: 10px; height: 10px; }
-    .status-bar { font-size: 10px; padding: 6px 12px; }
-  }
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&display=swap');
+:root {
+  --blue: #0088ff; --purple: #6600ff; --cyan: #00ccff; --green: #00ff88;
+  --bg: #080c18; --surface: rgba(8,12,28,.93);
+  --border: rgba(0,136,255,.3); --text: rgba(255,255,255,.85); --dim: rgba(255,255,255,.5);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg); font-family: 'JetBrains Mono', monospace; overflow-x: hidden; color: var(--text); }
+
+/* ── FIXED BACKGROUND ─────────────────────────── */
+#network { position: fixed; inset: 0; z-index: 0; }
+.glow { position: fixed; bottom: -200px; left: 50%; transform: translateX(-50%); width: 600px; height: 600px; background: radial-gradient(circle, rgba(0,136,255,.15) 0%, rgba(102,0,255,.08) 40%, transparent 70%); border-radius: 50%; z-index: 0; pointer-events: none; }
+.circuit-grid { position: fixed; inset: 0; z-index: 1; pointer-events: none; background-image: linear-gradient(rgba(0,136,255,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,136,255,.04) 1px, transparent 1px); background-size: 50px 50px; }
+.circuit-grid::after { content: ''; position: absolute; inset: 0; background-image: radial-gradient(circle at 20% 30%, rgba(0,136,255,.06) 0, transparent 80px), radial-gradient(circle at 70% 60%, rgba(102,0,255,.06) 0, transparent 100px), radial-gradient(circle at 40% 80%, rgba(0,200,255,.04) 0, transparent 70px); }
+
+/* ── NAVBAR ────────────────────────────────────── */
+#nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 11px 32px; display: flex; align-items: center; justify-content: space-between; background: rgba(8,12,28,.92); backdrop-filter: blur(14px); border-bottom: 1px solid var(--border); transform: translateY(-100%); transition: transform .35s ease; }
+#nav.show { transform: translateY(0); }
+.nav-logo { color: var(--cyan); font-size: 12px; letter-spacing: 3px; }
+.nav-logo b { color: var(--blue); font-weight: 800; }
+.nav-links { display: flex; gap: 26px; }
+.nav-links a { color: var(--dim); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; text-decoration: none; transition: color .2s; }
+.nav-links a:hover { color: var(--cyan); }
+
+/* ── HERO ──────────────────────────────────────── */
+#hero { position: relative; z-index: 2; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 80px 24px 72px; }
+
+/* Card */
+.card { position: relative; z-index: 2; width: 100%; max-width: 520px; background: var(--surface); border: 1px solid rgba(0,136,255,.5); box-shadow: 0 0 30px rgba(0,136,255,.15), 0 0 60px rgba(102,0,255,.08), inset 0 0 30px rgba(0,136,255,.04); backdrop-filter: blur(2px); }
+.card-header { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid rgba(0,136,255,.3); background: rgba(0,136,255,.04); }
+.dot { width: 12px; height: 12px; border-radius: 50%; }
+.dot.r { background: var(--blue); box-shadow: 0 0 10px var(--blue); animation: pulse-dot 2s infinite; }
+.dot.y { background: var(--purple); box-shadow: 0 0 10px var(--purple); animation: pulse-dot 2s infinite .3s; }
+.dot.g { background: var(--cyan); box-shadow: 0 0 10px var(--cyan); animation: pulse-dot 2s infinite .6s; }
+@keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.4} }
+.card-header .hdr-t { margin-left: auto; color: var(--dim); font-size: 11px; letter-spacing: 3px; text-transform: uppercase; }
+.card-body { padding: 36px 32px; }
+.prompt { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; }
+.prompt .arrow { color: var(--blue); text-shadow: 0 0 10px var(--blue); font-size: 16px; }
+.prompt .cmd { color: var(--cyan); text-shadow: 0 0 10px var(--cyan); font-weight: 700; letter-spacing: 1px; font-size: 15px; }
+.cursor { display: inline-block; width: 10px; height: 18px; background: var(--blue); box-shadow: 0 0 10px var(--blue); animation: blink 1s step-end infinite; }
+@keyframes blink { 50%{opacity:0} }
+.name { font-size: 26px; font-weight: 800; color: #fff; letter-spacing: 6px; text-transform: uppercase; margin-bottom: 6px; }
+.name .hl { color: var(--blue); text-shadow: 0 0 20px var(--blue); }
+.name .bar { display: inline-block; width: 3px; height: 26px; background: var(--blue); box-shadow: 0 0 12px var(--blue); margin-left: 4px; animation: blink 1s step-end infinite; vertical-align: middle; }
+.sub { color: rgba(255,255,255,.75); font-size: 13px; letter-spacing: 6px; text-transform: uppercase; margin-bottom: 28px; }
+.divider { height: 1px; background: linear-gradient(90deg, transparent, var(--blue), var(--purple), var(--cyan), transparent); margin-bottom: 28px; box-shadow: 0 0 10px rgba(0,136,255,.5); }
+.info-line { display: flex; align-items: center; gap: 12px; padding: 8px 0; font-size: 15px; color: rgba(255,255,255,.75); }
+.info-line .key { color: var(--blue); text-shadow: 0 0 6px var(--blue); min-width: 100px; }
+.info-line .key .br { color: var(--purple); text-shadow: 0 0 6px var(--purple); }
+.info-line .val { color: rgba(255,255,255,.9); }
+.info-line .val::before { content: '"'; color: var(--cyan); }
+.info-line .val::after { content: '"'; color: var(--cyan); }
+.links { display: flex; gap: 10px; margin-top: 24px; padding-top: 24px; border-top: 1px solid rgba(0,136,255,.15); }
+.links a { flex: 1; padding: 14px; text-align: center; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; text-decoration: none; color: rgba(255,255,255,.8); border: 1px solid rgba(0,136,255,.15); transition: all .3s; font-family: 'JetBrains Mono', monospace; position: relative; overflow: hidden; }
+.links a::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(0,136,255,.1), transparent); transition: left .5s; }
+.links a:hover::before { left: 100%; }
+.links a:hover { color: var(--cyan); border-color: var(--cyan); box-shadow: 0 0 20px rgba(0,204,255,.15); background: rgba(0,204,255,.05); }
+.status-bar { padding: 8px 16px; border-top: 1px solid rgba(0,136,255,.3); display: flex; justify-content: space-between; font-size: 11px; color: var(--dim); letter-spacing: 1px; background: rgba(0,136,255,.03); }
+.status-bar .ok { color: var(--cyan); text-shadow: 0 0 6px var(--cyan); }
+
+/* Scroll cue */
+.scroll-cue { position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--dim); font-size: 9px; letter-spacing: 4px; text-transform: uppercase; animation: float-cue 2.5s ease-in-out infinite; cursor: pointer; user-select: none; }
+.scroll-arrow { width: 16px; height: 16px; border-right: 1.5px solid rgba(0,136,255,.6); border-bottom: 1.5px solid rgba(0,136,255,.6); transform: rotate(45deg); }
+@keyframes float-cue { 0%,100%{transform:translateX(-50%) translateY(0);opacity:.8} 50%{transform:translateX(-50%) translateY(8px);opacity:.3} }
+
+/* ── SECTION COMMONS ───────────────────────────── */
+.sec { position: relative; z-index: 2; padding: 88px 32px; }
+.sec-hdr { max-width: 1100px; margin: 0 auto 52px; display: flex; align-items: center; gap: 16px; }
+.sec-hdr .num { color: var(--blue); font-size: 12px; letter-spacing: 1px; opacity: .65; }
+.sec-hdr h2 { font-size: 18px; font-weight: 800; letter-spacing: 5px; text-transform: uppercase; color: #fff; white-space: nowrap; }
+.sec-hdr .hdr-line { flex: 1; height: 1px; background: linear-gradient(90deg, rgba(0,136,255,.4), transparent); min-width: 20px; }
+.reveal { opacity: 0; transform: translateY(22px); transition: opacity .75s ease, transform .75s ease; }
+.reveal.in { opacity: 1; transform: translateY(0); }
+
+/* ── TERMINAL ──────────────────────────────────── */
+.term-wrap { max-width: 840px; margin: 0 auto; }
+.term-box { background: rgba(4,8,20,.97); border: 1px solid var(--border); box-shadow: 0 0 50px rgba(0,136,255,.09), 0 0 100px rgba(102,0,255,.05); }
+.term-hdr { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-bottom: 1px solid var(--border); background: rgba(0,136,255,.04); }
+.term-hdr-t { margin-left: auto; color: var(--dim); font-size: 11px; letter-spacing: 3px; }
+.term-out { padding: 16px 20px; height: 370px; overflow-y: auto; font-size: 13px; line-height: 2; display: flex; flex-direction: column; }
+.term-out::-webkit-scrollbar { width: 3px; }
+.term-out::-webkit-scrollbar-thumb { background: rgba(0,136,255,.3); }
+.t-row { display: flex; }
+.t-ps1 { color: var(--blue); margin-right: 8px; flex-shrink: 0; }
+.t-cmd { color: var(--cyan); }
+.t-out { color: var(--text); white-space: pre-wrap; word-break: break-word; }
+.t-out.dim { color: var(--dim); }
+.t-out.ok  { color: var(--cyan); }
+.t-out.err { color: #ff4466; }
+.t-out.acc { color: var(--green); }
+.t-out.hlt { color: var(--blue); }
+.term-in-row { display: flex; align-items: center; gap: 10px; padding: 12px 20px; border-top: 1px solid rgba(0,136,255,.15); }
+.term-ps1 { color: var(--blue); font-size: 13px; flex-shrink: 0; white-space: nowrap; }
+#term-input { flex: 1; background: none; border: none; outline: none; color: var(--cyan); font-family: 'JetBrains Mono', monospace; font-size: 13px; caret-color: var(--blue); }
+#term-input::placeholder { color: rgba(0,136,255,.35); }
+.term-foot { padding: 7px 20px 11px; font-size: 10px; color: var(--dim); letter-spacing: 1px; border-top: 1px solid rgba(0,136,255,.06); }
+
+/* ── SKILLS ────────────────────────────────────── */
+.skills-grid { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+.skill-cat { background: rgba(8,12,28,.85); border: 1px solid rgba(0,136,255,.2); padding: 24px; transition: border-color .3s; }
+.skill-cat:hover { border-color: rgba(0,136,255,.5); box-shadow: 0 0 20px rgba(0,136,255,.06); }
+.skill-cat h3 { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--blue); margin-bottom: 22px; padding-bottom: 10px; border-bottom: 1px solid rgba(0,136,255,.15); }
+.skill-item { margin-bottom: 14px; }
+.skill-item:last-child { margin-bottom: 0; }
+.skill-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 7px; }
+.skill-name { color: var(--text); }
+.skill-pct { color: var(--cyan); font-size: 11px; }
+.skill-track { height: 3px; background: rgba(0,136,255,.1); position: relative; }
+.skill-fill { position: absolute; top: 0; left: 0; height: 100%; background: linear-gradient(90deg, var(--blue), var(--cyan)); box-shadow: 0 0 8px rgba(0,136,255,.6); width: 0; transition: width 1.4s cubic-bezier(.25,.46,.45,.94); }
+.skill-fill::after { content: ''; position: absolute; right: -2px; top: 50%; transform: translateY(-50%); width: 6px; height: 6px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+
+/* ── GITHUB ────────────────────────────────────── */
+/* removed */
+
+/* ── TIMELINE ──────────────────────────────────── */
+.tl-wrap { max-width: 820px; margin: 0 auto; }
+.tl-cmd { font-size: 11px; color: var(--dim); margin-bottom: 32px; padding: 10px 14px; border-left: 2px solid var(--blue); background: rgba(0,136,255,.04); letter-spacing: .5px; }
+.tl-cmd span { color: var(--cyan); }
+.timeline { position: relative; }
+.timeline::before { content: ''; position: absolute; left: 13px; top: 0; bottom: 0; width: 1px; background: linear-gradient(to bottom, transparent, var(--blue) 5%, rgba(0,136,255,.35) 90%, transparent); }
+.tl-item { padding: 0 0 40px 52px; position: relative; opacity: 0; transform: translateX(-14px); transition: opacity .6s ease, transform .6s ease; }
+.tl-item.in { opacity: 1; transform: translateX(0); }
+.tl-dot { position: absolute; left: 8px; top: 5px; width: 12px; height: 12px; border-radius: 50%; background: var(--blue); box-shadow: 0 0 14px var(--blue); border: 2px solid var(--bg); }
+.tl-meta { font-size: 11px; color: var(--dim); margin-bottom: 8px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.tl-hash { color: var(--purple); text-shadow: 0 0 6px var(--purple); letter-spacing: 1px; }
+.tl-title { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+.tl-org { font-size: 12px; color: var(--cyan); margin-bottom: 10px; }
+.tl-desc { font-size: 12px; color: var(--dim); line-height: 1.8; }
+.tl-tags { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
+.tl-tag { font-size: 10px; letter-spacing: 1px; padding: 3px 9px; border: 1px solid rgba(0,136,255,.3); color: rgba(0,136,255,.8); }
+
+/* ── MATRIX ────────────────────────────────────── */
+#matrix-overlay { display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,.93); cursor: pointer; }
+#matrix-overlay.on { display: block; }
+#mcanvas { position: absolute; inset: 0; }
+.mx-ui { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; gap: 14px; }
+.mx-title { font-size: 30px; font-weight: 800; letter-spacing: 12px; text-transform: uppercase; color: rgba(0,255,70,.85); text-shadow: 0 0 30px rgba(0,255,70,.5); animation: glitch 4s infinite; }
+.mx-sub { font-size: 11px; letter-spacing: 4px; color: rgba(0,255,70,.45); text-transform: uppercase; }
+.mx-exit { position: absolute; top: 20px; right: 24px; color: rgba(0,255,70,.5); font-size: 11px; letter-spacing: 2px; pointer-events: all; transition: color .2s; }
+.mx-exit:hover { color: rgba(0,255,70,.9); }
+@keyframes glitch {
+  0%,88%,100% { text-shadow: 0 0 30px rgba(0,255,70,.5); transform: skew(0); }
+  89% { text-shadow: 3px 0 #f00, -3px 0 #0ff; transform: skew(3deg); }
+  91% { text-shadow: -3px 0 #f00, 3px 0 #0ff; transform: skew(-2deg); }
+  93% { text-shadow: 0 0 30px rgba(0,255,70,.5); transform: skew(0); }
+}
+
+/* ── FOOTER ────────────────────────────────────── */
+footer { position: relative; z-index: 2; padding: 26px 32px; text-align: center; border-top: 1px solid rgba(0,136,255,.12); font-size: 11px; color: var(--dim); letter-spacing: 2px; }
+footer .ok { color: var(--cyan); }
+
+/* ── RESPONSIVE ────────────────────────────────── */
+@media (max-width: 600px) {
+  #nav { padding: 12px 16px; }
+  .nav-links { gap: 16px; }
+  .nav-links a { font-size: 10px; }
+  .sec { padding: 60px 16px; }
+  .card-body { padding: 24px 20px; }
+  .name { font-size: 22px; letter-spacing: 4px; }
+  .sub { font-size: 11px; letter-spacing: 4px; }
+  .info-line { font-size: 13px; gap: 8px; }
+  .info-line .key { min-width: 80px; }
+  .links { flex-direction: column; }
+  .links a { padding: 12px; font-size: 12px; }
+  .card-header { padding: 10px 12px; gap: 8px; }
+  .dot { width: 10px; height: 10px; }
+  .status-bar { font-size: 10px; padding: 6px 12px; }
+  .term-out { height: 260px; font-size: 12px; }
+  .sec-hdr h2 { font-size: 15px; }
+}
 </style>
 </head>
 <body>
+
 <canvas id="network"></canvas>
 <div class="glow"></div>
 <div class="circuit-grid"></div>
 
-<div class="card">
-  <div class="card-header">
-    <span class="dot r"></span>
-    <span class="dot y"></span>
-    <span class="dot g"></span>
-    <span class="title">AI::agent</span>
+<!-- ── NAVBAR ───────────────────────────────────────── -->
+<nav id="nav">
+  <span class="nav-logo"><b>MC</b> // cloud.arch</span>
+  <div class="nav-links">
+    <a href="#sec-term">terminal</a>
+    <a href="#sec-skills">skills</a>
+    <a href="#sec-career">timeline</a>
+    <a href="tools/">tools</a>
   </div>
-  <div class="card-body">
-    <div class="prompt">
-      <span class="arrow">&#9656;</span>
-      <span class="cmd">~/$ identify</span>
-      <span class="cursor"></span>
-    </div>
+</nav>
 
-    <div class="name">
-      <span class="highlight">M</span>ARC <span class="highlight">C</span>ASIN
-      <span class="bar"></span>
+<!-- ── HERO ─────────────────────────────────────────── -->
+<section id="hero">
+  <div class="card">
+    <div class="card-header">
+      <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <span class="hdr-t">AI::agent</span>
     </div>
-    <div class="sub">Cloud Architect</div>
-    <div class="divider"></div>
-
-    <div class="line">
-      <span class="key"><span class="bracket">[</span>email<span class="bracket">]</span></span>
-      <span class="val">mcasin@gmail.com</span>
+    <div class="card-body">
+      <div class="prompt">
+        <span class="arrow">&#9656;</span>
+        <span class="cmd">~/$ identify</span>
+        <span class="cursor"></span>
+      </div>
+      <div class="name"><span class="hl">M</span>ARC <span class="hl">C</span>ASIN<span class="bar"></span></div>
+      <div class="sub">Cloud Architect</div>
+      <div class="divider"></div>
+      <div class="info-line">
+        <span class="key"><span class="br">[</span>email<span class="br">]</span></span>
+        <span class="val">mcasin@gmail.com</span>
+      </div>
+      <div class="info-line">
+        <span class="key"><span class="br">[</span>location<span class="br">]</span></span>
+        <span class="val">Barcelona, Spain</span>
+      </div>
+      <div class="info-line">
+        <span class="key"><span class="br">[</span>status<span class="br">]</span></span>
+        <span class="val" style="color:var(--cyan)">system.online</span>
+      </div>
+      <div class="links">
+        <a href="https://github.com/mcasin">&#91;github&#93;</a>
+        <a href="https://www.linkedin.com/in/marc-casin-martinez-a80a7332/">&#91;linkedin&#93;</a>
+        <a href="tools/">&#91;tools&#93;</a>
+      </div>
     </div>
-    <div class="line">
-      <span class="key"><span class="bracket">[</span>location<span class="bracket">]</span></span>
-      <span class="val">Barcelona, Spain</span>
-    </div>
-    <div class="line">
-      <span class="key"><span class="bracket">[</span>status<span class="bracket">]</span></span>
-      <span class="val" style="color: #00ccff;">system.online</span>
-    </div>
-
-    <div class="links">
-      <a href="https://github.com/mcasin">&#91;github&#93;</a>
-      <a href="https://www.linkedin.com/in/marc-casin-martinez-a80a7332/">&#91;linkedin&#93;</a>
-      <a href="https://mcasin.cloud/tools/">&#91;tools&#93;</a>
+    <div class="status-bar">
+      <span class="ok">&#9679; neural.link active</span>
+      <span>latency: 4ms</span>
+      <span>model: v2.0</span>
     </div>
   </div>
-  <div class="status-bar">
-    <span class="ok">&#9679; neural.link active</span>
-    <span>latency: 4ms</span>
-    <span>model: v2.0</span>
+
+  <div class="scroll-cue" onclick="document.getElementById('sec-term').scrollIntoView({behavior:'smooth'})">
+    <span>scroll</span><div class="scroll-arrow"></div>
   </div>
+</section>
+
+<!-- ── TERMINAL ──────────────────────────────────────── -->
+<section class="sec" id="sec-term">
+  <div class="sec-hdr reveal">
+    <span class="num">02 //</span>
+    <h2>interactive terminal</h2>
+    <div class="hdr-line"></div>
+  </div>
+  <div class="term-wrap reveal">
+    <div class="term-box">
+      <div class="term-hdr">
+        <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <span class="term-hdr-t">bash — mcasin@cloud:~</span>
+      </div>
+      <div class="term-out" id="term-out"></div>
+      <div class="term-in-row">
+        <span class="term-ps1">mcasin@cloud:~$</span>
+        <input id="term-input" type="text" autocomplete="off" spellcheck="false" placeholder="type 'help' to get started...">
+      </div>
+      <div class="term-foot">↑↓ history &nbsp;·&nbsp; try: <span style="color:var(--blue)">help · whoami · skills · ping · matrix</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── SKILLS ────────────────────────────────────────── -->
+<section class="sec" id="sec-skills">
+  <div class="sec-hdr reveal">
+    <span class="num">03 //</span>
+    <h2>tech stack</h2>
+    <div class="hdr-line"></div>
+  </div>
+  <div class="skills-grid" id="skills-grid"></div>
+</section>
+
+<!-- ── TIMELINE ──────────────────────────────────────── -->
+<section class="sec" id="sec-career">
+  <div class="sec-hdr reveal">
+    <span class="num">04 //</span>
+    <h2>git log --career</h2>
+    <div class="hdr-line"></div>
+  </div>
+  <div class="tl-wrap">
+    <div class="tl-cmd"><span>$ git log --all --format="%h  %s  (%ad)" --date=short</span></div>
+    <div class="timeline" id="timeline"></div>
+  </div>
+</section>
+
+<!-- ── MATRIX OVERLAY ────────────────────────────────── -->
+<div id="matrix-overlay" onclick="hideMatrix()">
+  <canvas id="mcanvas"></canvas>
+  <div class="mx-ui">
+    <div class="mx-title">ACCESS GRANTED</div>
+    <div class="mx-sub">all systems compromised · neural link active</div>
+  </div>
+  <div class="mx-exit" onclick="hideMatrix()">[ ESC / CLICK TO EXIT ]</div>
 </div>
 
+<footer>
+  <span class="ok">●</span>&nbsp; mcasin.cloud &nbsp;·&nbsp; vanilla html + css + js &nbsp;·&nbsp; <span class="ok">system.online</span>
+</footer>
+
 <script>
-  const canvas = document.getElementById('network');
-  const ctx = canvas.getContext('2d');
-  let nodes = [];
-  let mouse = { x: 0, y: 0 };
+'use strict';
 
-  function resize() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    initNodes();
-  }
+// ── NETWORK BACKGROUND ──────────────────────────────────────────
+const netC = document.getElementById('network');
+const netX = netC.getContext('2d');
+let nodes = [], mouse = { x: -9999, y: -9999 };
 
-  function initNodes() {
-    nodes = [];
-    const count = Math.floor((canvas.width * canvas.height) / 25000);
-    for (let i = 0; i < count; i++) {
-      nodes.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        vx: (Math.random() - .5) * .3,
-        vy: (Math.random() - .5) * .3,
-        r: Math.random() * 2 + 1
-      });
+function netResize() {
+  netC.width = innerWidth; netC.height = innerHeight;
+  nodes = [];
+  const n = Math.floor((netC.width * netC.height) / 25000);
+  for (let i = 0; i < n; i++) nodes.push({ x: Math.random()*netC.width, y: Math.random()*netC.height, vx: (Math.random()-.5)*.3, vy: (Math.random()-.5)*.3, r: Math.random()*2+1 });
+}
+netResize();
+addEventListener('resize', netResize);
+addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+function netDraw() {
+  netX.fillStyle = 'rgba(8,12,28,.15)'; netX.fillRect(0,0,netC.width,netC.height);
+  for (let i = 0; i < nodes.length; i++) {
+    const n = nodes[i]; n.x += n.vx; n.y += n.vy;
+    if (n.x<0||n.x>netC.width) n.vx*=-1; if (n.y<0||n.y>netC.height) n.vy*=-1;
+    const dx=mouse.x-n.x, dy=mouse.y-n.y, md=Math.hypot(dx,dy);
+    if (md<150) { n.x-=dx*.005; n.y-=dy*.005; }
+    for (let j=i+1; j<nodes.length; j++) {
+      const m=nodes[j], ed=Math.hypot(n.x-m.x,n.y-m.y);
+      if (ed<120) { netX.strokeStyle=`rgba(0,136,255,${(1-ed/120)*.3})`; netX.lineWidth=.5; netX.beginPath(); netX.moveTo(n.x,n.y); netX.lineTo(m.x,m.y); netX.stroke(); }
     }
+    netX.beginPath(); netX.arc(n.x,n.y,n.r,0,Math.PI*2);
+    netX.fillStyle=`rgba(0,136,255,${n.r/3})`; netX.shadowColor='#0088ff'; netX.shadowBlur=6; netX.fill(); netX.shadowBlur=0;
   }
+}
+setInterval(netDraw, 30);
 
-  resize();
-  window.addEventListener('resize', resize);
-  window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+// ── NAVBAR ──────────────────────────────────────────────────────
+const nav = document.getElementById('nav');
+addEventListener('scroll', () => { nav.classList.toggle('show', scrollY > innerHeight * .6); });
 
+// ── REVEAL OBSERVER ─────────────────────────────────────────────
+const revObs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); revObs.unobserve(e.target); } });
+}, { threshold: .12 });
+document.querySelectorAll('.reveal').forEach(el => revObs.observe(el));
+
+// ── SKILLS ──────────────────────────────────────────────────────
+const SKILLS = [
+  { cat: 'Cloud Platforms', items: [{ n:'Microsoft Azure',pct:97 },{ n:'Amazon Web Services',pct:85 },{ n:'Hybrid Cloud (VMware)',pct:75 }] },
+  { cat: 'Infrastructure as Code', items: [{ n:'Terraform / OpenTofu',pct:95 },{ n:'Bicep / ARM Templates',pct:88 },{ n:'Ansible',pct:80 }] },
+  { cat: 'DevOps & Containers', items: [{ n:'GitHub Actions',pct:92 },{ n:'Docker',pct:90 },{ n:'Kubernetes / AKS',pct:85 }] },
+  { cat: 'Systems & Scripting', items: [{ n:'Linux / Bash',pct:92 },{ n:'Windows Server',pct:85 },{ n:'Python',pct:75 }] },
+];
+(function renderSkills() {
+  const grid = document.getElementById('skills-grid');
+  SKILLS.forEach((cat, ci) => {
+    const div = document.createElement('div');
+    div.className = 'skill-cat reveal'; div.style.transitionDelay = ci*.1+'s';
+    div.innerHTML = `<h3>${cat.cat}</h3>` + cat.items.map(it =>
+      `<div class="skill-item"><div class="skill-row"><span class="skill-name">${it.n}</span><span class="skill-pct">${it.pct}%</span></div><div class="skill-track"><div class="skill-fill" data-pct="${it.pct}"></div></div></div>`
+    ).join('');
+    grid.appendChild(div); revObs.observe(div);
+  });
+  const sObs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.querySelectorAll('.skill-fill').forEach(b => { b.style.width = b.dataset.pct+'%'; }); sObs.unobserve(e.target); } });
+  }, { threshold: .3 });
+  document.querySelectorAll('.skill-cat').forEach(el => sObs.observe(el));
+})();
+
+// ── TIMELINE ────────────────────────────────────────────────────
+const TL = [
+  { hash:'f3a1d09', date:'Nov 2025 → present', title:'Cloud Platform Architect', org:'Nestlé Nespresso SA · Barcelona',
+    desc:'Leading cloud platform architecture for Nespresso globally. Designing Azure Landing Zones, building reusable Terraform modules, and driving DevSecOps adoption across product engineering teams.',
+    tags:['Azure','Terraform','Landing Zones','GitHub Actions','DevSecOps','IaC'] },
+  { hash:'c7e4b82', date:'Sep 2021 → Nov 2025', title:'Cloud Solutions Architect', org:'Nestlé · Barcelona',
+    desc:'Designed and governed enterprise cloud solutions across Azure and AWS for Nestlé global teams. Defined cloud standards, reusable patterns, and automation frameworks at scale.',
+    tags:['Azure','AWS','Terraform','Bicep','Cloud Governance'] },
+  { hash:'9d2f5a1', date:'Feb 2020 → Sep 2021', title:'Infrastructure & Cloud Consultant', org:'TOKIOTA · Barcelona',
+    desc:'Delivered infrastructure and cloud consulting projects for clients. Migrated on-prem workloads to Azure and AWS, implemented IaC pipelines and automated deployments.',
+    tags:['Azure','AWS','Terraform','Ansible','CI/CD'] },
+  { hash:'3b8c0e6', date:'Mar 2018 → Feb 2020', title:'Senior Cloud Consultant', org:'Clevertask IT Solutions · Barcelona',
+    desc:'Senior consultant specialising in cloud infrastructure design and migration. Advised clients on Azure and AWS architectures and delivered end-to-end cloud projects.',
+    tags:['Azure','AWS','IaC','Cloud Migration'] },
+  { hash:'a5f1c34', date:'Jan 2012 → Mar 2018', title:'Build / Cloud / Solutions Architect', org:'Claranet Spain · Barcelona',
+    desc:'Progressed through four roles over 6 years: Solution Engineering → Build Engineering → Cloud Architect → Solutions & Cloud Architect. Designed systems in public clouds (AWS, Azure) and hybrid clouds (VMware). Web services specialist.',
+    tags:['AWS','Azure','VMware','Hybrid Cloud','Web Services'] },
+  { hash:'0e7d2b5', date:'Feb 2006 → Dec 2011', title:'Systems Administrator', org:'Minorisa de Sistemas · Sant Fruitós de Bages',
+    desc:'Full systems administration of on-premises infrastructure. Managed servers, networking, and client IT environments for a managed services company.',
+    tags:['Linux','Windows Server','Networking','On-Premises'] },
+];
+(function renderTL() {
+  const tl = document.getElementById('timeline');
+  TL.forEach((item, i) => {
+    const div = document.createElement('div');
+    div.className = 'tl-item'; div.style.transitionDelay = i*.1+'s';
+    div.innerHTML = `<div class="tl-dot"></div><div class="tl-meta"><span class="tl-hash">commit ${item.hash}</span><span>${item.date}</span></div><div class="tl-title">${item.title}</div><div class="tl-org">${item.org}</div><div class="tl-desc">${item.desc}</div><div class="tl-tags">${item.tags.map(t=>`<span class="tl-tag">${t}</span>`).join('')}</div>`;
+    tl.appendChild(div);
+  });
+  const tlObs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); tlObs.unobserve(e.target); } });
+  }, { threshold: .15 });
+  document.querySelectorAll('.tl-item').forEach(el => tlObs.observe(el));
+})();
+
+// ── TERMINAL ────────────────────────────────────────────────────
+const tOut = document.getElementById('term-out');
+const tIn  = document.getElementById('term-input');
+let tHist = [], tHistIdx = -1;
+
+function tPrint(text, cls='') {
+  const d = document.createElement('div');
+  d.className = 't-out' + (cls?' '+cls:''); d.textContent = text;
+  tOut.appendChild(d); tOut.scrollTop = tOut.scrollHeight;
+}
+function tEcho(cmd) {
+  const r = document.createElement('div'); r.className = 't-row';
+  r.innerHTML = `<span class="t-ps1">mcasin@cloud:~$&nbsp;</span><span class="t-cmd">${cmd.replace(/</g,'&lt;')}</span>`;
+  tOut.appendChild(r); tOut.scrollTop = tOut.scrollHeight;
+}
+
+const CMDS = {
+  help: `Available commands:
+  help       — this message
+  whoami     — system identity
+  skills     — tech stack overview
+  projects   — open github repositories
+  contact    — contact information
+  timeline   — scroll to career history
+  ls         — list directory
+  cat        — read a file  (try: cat resume.txt)
+  ping       — ping a host  (try: ping mcasin.cloud)
+  clear      — clear terminal
+  matrix     — ???  try it`,
+
+  whoami: `Marc Casin Martinez
+├── role      : Cloud Platform Architect
+├── location  : Barcelona, Spain (41.3851°N · 2.1734°E)
+├── focus     : Azure · AWS · Terraform · IaC
+├── company   : Nestlé Nespresso SA
+├── github    : github.com/mcasin
+└── status    : system.online`,
+
+  skills: `Tech Stack:
+  cloud     █████████████████████  Azure       (97%)
+            █████████████████░░░░  AWS         (85%)
+            ███████████████░░░░░░  Hybrid/VMw  (75%)
+
+  IaC       ████████████████████░  Terraform   (95%)
+            █████████████████░░░░  Bicep/ARM   (88%)
+            ████████████████░░░░░  Ansible     (80%)
+
+  devops    ████████████████████░  GitHub Act. (92%)
+            ███████████████████░░  Docker      (90%)
+            █████████████████░░░░  Kubernetes  (85%)
+
+  systems   █████████████████████  Linux/Bash  (92%)
+            █████████████████░░░░  Win Server  (85%)
+            ███████████████░░░░░░  Python      (75%)`,
+
+  contact: `Contact:
+  [email]    mcasin@gmail.com
+  [github]   https://github.com/mcasin
+  [linkedin] https://linkedin.com/in/marc-casin-martinez-a80a7332
+  [web]      https://mcasin.cloud`,
+
+  ls: `total 6
+drwxr-xr-x  skills/
+drwxr-xr-x  projects/
+drwxr-xr-x  tools/
+-rw-r--r--  resume.txt
+-rw-r--r--  contact.json
+-rw-------  .secrets    [ENCRYPTED]`,
+
+  'cat resume.txt': `══════════════════════════════════════
+  Marc Casin Martinez
+  Cloud Platform Architect
+  Barcelona, Spain
+══════════════════════════════════════
+  Cloud senior consultant and architect
+  specialised in Azure and AWS.
+  19+ years in IT infrastructure.
+
+  Current    : Nestlé Nespresso SA
+  Cloud      : Azure (Expert) · AWS
+  IaC        : Terraform · Bicep · Ansible
+  CI/CD      : GitHub Actions · Docker · K8s
+  Certs      : MCSE Cloud · AZ-304 · MCSA
+══════════════════════════════════════`,
+
+  'cat contact.json': `{
+  "name":     "Marc Casin",
+  "role":     "Cloud Architect",
+  "email":    "mcasin@gmail.com",
+  "github":   "mcasin",
+  "location": "Barcelona, Spain"
+}`,
+};
+
+function runCmd(raw) {
+  const input = raw.trim(); if (!input) return;
+  tEcho(input); tHist.unshift(input); tHistIdx = -1;
+  const lo = input.toLowerCase(), parts = lo.split(' '), cmd = parts[0];
+
+  if (cmd === 'clear') { tOut.innerHTML = ''; return; }
+  if (CMDS[lo]) { tPrint(CMDS[lo], lo==='skills'?'hlt':lo==='whoami'||lo==='contact'?'ok':'dim'); return; }
+  if (CMDS[cmd]) { tPrint(CMDS[cmd], 'ok'); return; }
+  if (cmd === 'cat' && lo.includes('.secrets')) { tPrint('cat: .secrets: Permission denied', 'err'); return; }
+  if (cmd === 'cat') { tPrint(`cat: ${parts.slice(1).join(' ')}: No such file or directory`, 'err'); return; }
+  if (cmd === 'projects' || cmd === 'repos') { tPrint('>> opening github.com/mcasin ...', 'dim'); setTimeout(()=>window.open('https://github.com/mcasin','_blank'),400); return; }
+  if (cmd === 'timeline') { tPrint('>> scrolling to career timeline...', 'dim'); setTimeout(()=>document.getElementById('sec-career').scrollIntoView({behavior:'smooth'}),300); return; }
+  if (cmd === 'ping') {
+    const host = parts[1]||'mcasin.cloud';
+    tPrint(`PING ${host}: 56 data bytes`, 'dim');
+    [4,3,5,4].forEach((ms,i)=>setTimeout(()=>tPrint(`64 bytes from ${host}: icmp_seq=${i+1} ttl=57 time=${ms} ms`,'ok'),i*320));
+    setTimeout(()=>tPrint(`--- ${host} ping statistics ---\n4 packets, 0% loss`,'dim'),1400); return;
+  }
+  if (cmd === 'matrix' || cmd === 'hack' || lo === 'sudo rm -rf /') {
+    tPrint(lo==='sudo rm -rf /'?'nice try 😈 ...\n>> initiating countermeasures...':'>> neural override initiated...', 'err');
+    setTimeout(showMatrix, lo==='sudo rm -rf /'?900:350); return;
+  }
+  if (cmd === 'echo') { tPrint(parts.slice(1).join(' ')); return; }
+  if (cmd === 'date') { tPrint(new Date().toString(), 'dim'); return; }
+  if (cmd === 'uname') { tPrint('Linux cloud 6.1.0-mcasin #1 SMP x86_64 GNU/Linux', 'dim'); return; }
+  if (cmd === 'uptime') { tPrint('up 365 days, 0 hours, 0 min — no downtime recorded', 'ok'); return; }
+  if (cmd === 'pwd') { tPrint('/home/mcasin', 'dim'); return; }
+  if (cmd === 'cd') { tPrint('there is nowhere to go — you are already home.', 'dim'); return; }
+  if (cmd === 'exit' || cmd === 'quit') { tPrint('there is no escape.', 'err'); return; }
+  tPrint(`bash: ${cmd}: command not found  (try 'help')`, 'err');
+}
+
+tIn.addEventListener('keydown', e => {
+  if (e.key === 'Enter') { runCmd(tIn.value); tIn.value = ''; }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); if (tHistIdx < tHist.length-1) { tHistIdx++; tIn.value = tHist[tHistIdx]; } }
+  else if (e.key === 'ArrowDown') { e.preventDefault(); if (tHistIdx > 0) { tHistIdx--; tIn.value = tHist[tHistIdx]; } else { tHistIdx=-1; tIn.value=''; } }
+});
+// Auto-focus terminal on click
+document.querySelector('.term-box').addEventListener('click', () => tIn.focus());
+// Welcome message
+tPrint(`Welcome to mcasin.cloud — type 'help' for available commands.`, 'dim');
+
+// ── MATRIX RAIN ─────────────────────────────────────────────────
+let matrixAF = null;
+function showMatrix() {
+  const ov = document.getElementById('matrix-overlay');
+  const cv = document.getElementById('mcanvas');
+  ov.classList.add('on');
+  cv.width = innerWidth; cv.height = innerHeight;
+  const ctx = cv.getContext('2d');
+  const cols = Math.floor(cv.width / 16);
+  const drops = Array(cols).fill(0);
+  const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモラリルレロワヲン0123456789ABCDEF';
   function draw() {
-    ctx.fillStyle = 'rgba(8, 12, 28, .15)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    for (let i = 0; i < nodes.length; i++) {
-      const n = nodes[i];
-      n.x += n.vx;
-      n.y += n.vy;
-      if (n.x < 0 || n.x > canvas.width) n.vx *= -1;
-      if (n.y < 0 || n.y > canvas.height) n.vy *= -1;
-
-      const dx = mouse.x - n.x;
-      const dy = mouse.y - n.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < 150) {
-        n.x -= dx * .005;
-        n.y -= dy * .005;
-      }
-
-      for (let j = i + 1; j < nodes.length; j++) {
-        const m = nodes[j];
-        const dx = n.x - m.x;
-        const dy = n.y - m.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 120) {
-          ctx.strokeStyle = `rgba(0, 136, 255, ${(1 - dist / 120) * .3})`;
-          ctx.lineWidth = .5;
-          ctx.beginPath();
-          ctx.moveTo(n.x, n.y);
-          ctx.lineTo(m.x, m.y);
-          ctx.stroke();
-        }
-      }
-
-      ctx.beginPath();
-      ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(0, 136, 255, ${n.r / 3})`;
-      ctx.shadowColor = '#0088ff';
-      ctx.shadowBlur = 6;
-      ctx.fill();
-      ctx.shadowBlur = 0;
-    }
+    ctx.fillStyle = 'rgba(0,0,0,.05)'; ctx.fillRect(0,0,cv.width,cv.height);
+    ctx.fillStyle = '#00ff41'; ctx.font = '15px monospace';
+    drops.forEach((y, i) => {
+      ctx.fillStyle = i%3===0?'#00ff41':'rgba(0,255,65,.5)';
+      ctx.fillText(chars[Math.floor(Math.random()*chars.length)], i*16, y*16);
+      if (y*16 > cv.height && Math.random() > .975) drops[i] = 0; else drops[i]++;
+    });
+    matrixAF = requestAnimationFrame(draw);
   }
+  draw();
+}
+function hideMatrix() {
+  document.getElementById('matrix-overlay').classList.remove('on');
+  if (matrixAF) { cancelAnimationFrame(matrixAF); matrixAF = null; }
+}
+addEventListener('keydown', e => { if (e.key === 'Escape') hideMatrix(); });
 
-  setInterval(draw, 30);
+// ── KONAMI CODE EASTER EGG ──────────────────────────────────────
+const KONAMI = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+let konamiIdx = 0;
+addEventListener('keydown', e => {
+  if (e.key === KONAMI[konamiIdx]) { konamiIdx++; if (konamiIdx === KONAMI.length) { showMatrix(); konamiIdx = 0; } }
+  else konamiIdx = 0;
+});
 </script>
 </body>
 </html>
