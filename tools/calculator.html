@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora Científica</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: #080c18; font-family: 'JetBrains Mono', monospace; overflow-x: hidden; overflow-y: auto; padding: 20px;
+  }
+  #network { position: fixed; inset: 0; z-index: 0; }
+  .glow {
+    position: fixed; bottom: -200px; left: 50%; transform: translateX(-50%);
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(0,136,255,.15) 0%, rgba(102,0,255,.08) 40%, transparent 70%);
+    border-radius: 50%; z-index: 0;
+  }
+  .circuit-grid {
+    position: fixed; inset: 0; z-index: 1; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(0,136,255,.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,136,255,.04) 1px, transparent 1px);
+    background-size: 50px 50px;
+    mask-image: linear-gradient(to bottom, transparent 10%, #000 50%, #000 100%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 10%, #000 50%, #000 100%);
+  }
+  .circuit-grid::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(0,136,255,.06) 0, transparent 80px),
+      radial-gradient(circle at 70% 60%, rgba(102,0,255,.06) 0, transparent 100px),
+      radial-gradient(circle at 40% 80%, rgba(0,200,255,.04) 0, transparent 70px);
+  }
+  .card {
+    position: relative; z-index: 2; width: 100%; max-width: 460px;
+    background: rgba(8,12,28,.92);
+    border: 1px solid rgba(0,136,255,.5);
+    box-shadow: 0 0 30px rgba(0,136,255,.15), 0 0 60px rgba(102,0,255,.08), inset 0 0 30px rgba(0,136,255,.04);
+    backdrop-filter: blur(2px);
+  }
+  .card-header {
+    display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+    border-bottom: 1px solid rgba(0,136,255,.3); background: rgba(0,136,255,.04);
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .dot.r { background: #0088ff; box-shadow: 0 0 10px #0088ff; animation: pulse-dot 2s infinite; }
+  .dot.y { background: #6600ff; box-shadow: 0 0 10px #6600ff; animation: pulse-dot 2s infinite .3s; }
+  .dot.g { background: #00ccff; box-shadow: 0 0 10px #00ccff; animation: pulse-dot 2s infinite .6s; }
+  @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+  .header-left { display: flex; align-items: center; gap: 8px; }
+  .header-right { display: flex; align-items: center; gap: 8px; }
+  .card-header .title {
+    flex: 1; text-align: center; color: rgba(255,255,255,.45); font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+  }
+  .back-btn, .header-btn {
+    background: none; border: 1px solid rgba(0,136,255,.15); width: 34px; height: 34px;
+    font-size: 14px; cursor: pointer; color: rgba(255,255,255,.75); transition: all .3s; text-decoration: none;
+    display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace;
+  }
+  .back-btn:hover, .header-btn:hover {
+    color: #00ccff; border-color: #00ccff; box-shadow: 0 0 20px rgba(0,204,255,.15); background: rgba(0,204,255,.05);
+  }
+  .card-body { padding: 24px 20px; }
+  
+  .calc-container {
+    display: flex;
+    flex-direction: column;
+  }
+  .calc-screen {
+    background: rgba(0, 136, 255, 0.02);
+    border: 1px solid rgba(0, 136, 255, 0.2);
+    padding: 16px;
+    margin-bottom: 16px;
+    min-height: 90px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-end;
+    position: relative;
+    overflow: hidden;
+  }
+  .calc-screen::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(rgba(0, 136, 255, 0.05) 50%, transparent 50%);
+    background-size: 100% 4px;
+    pointer-events: none;
+    opacity: 0.3;
+  }
+  .calc-history {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.4);
+    min-height: 18px;
+    word-break: break-all;
+    width: 100%;
+    text-align: right;
+    letter-spacing: 0.5px;
+  }
+  .calc-display {
+    font-size: 28px;
+    font-weight: 700;
+    color: #00ccff;
+    text-shadow: 0 0 10px rgba(0, 204, 255, 0.4);
+    word-break: break-all;
+    width: 100%;
+    text-align: right;
+    letter-spacing: 1px;
+    margin-top: 4px;
+  }
+  
+  .calc-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+  }
+  
+  .btn {
+    background: rgba(0, 136, 255, 0.03);
+    border: 1px solid rgba(0, 136, 255, 0.15);
+    color: rgba(255, 255, 255, 0.85);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 14px 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .btn:active, .btn.active {
+    transform: scale(0.95);
+  }
+  
+  .btn.num {
+    border-color: rgba(0, 136, 255, 0.15);
+    color: rgba(255, 255, 255, 0.85);
+  }
+  .btn.num:hover {
+    color: #00ccff;
+    border-color: #00ccff;
+    background: rgba(0, 204, 255, 0.05);
+    box-shadow: 0 0 12px rgba(0, 204, 255, 0.1);
+  }
+  
+  .btn.fn {
+    border-color: rgba(102, 0, 255, 0.25);
+    color: #a370ff;
+  }
+  .btn.fn:hover {
+    color: #b78cff;
+    border-color: #6600ff;
+    background: rgba(102, 0, 255, 0.08);
+    box-shadow: 0 0 12px rgba(102, 0, 255, 0.15);
+  }
+  
+  .btn.op {
+    border-color: rgba(0, 136, 255, 0.25);
+    color: #0088ff;
+  }
+  .btn.op:hover {
+    color: #00ccff;
+    border-color: #0088ff;
+    background: rgba(0, 136, 255, 0.08);
+    box-shadow: 0 0 12px rgba(0, 136, 255, 0.15);
+  }
+  
+  .btn.eq {
+    background: linear-gradient(135deg, rgba(0, 136, 255, 0.1), rgba(0, 204, 255, 0.1));
+    border-color: #00ccff;
+    color: #00ccff;
+    text-shadow: 0 0 8px rgba(0, 204, 255, 0.5);
+    box-shadow: 0 0 10px rgba(0, 204, 255, 0.1);
+  }
+  .btn.eq:hover {
+    background: linear-gradient(135deg, rgba(0, 136, 255, 0.2), rgba(0, 204, 255, 0.2));
+    box-shadow: 0 0 20px rgba(0, 204, 255, 0.3);
+  }
+  
+  .disclaimer {
+    font-size: 11px;
+    color: rgba(255,255,255,.55);
+    margin-top: 16px;
+    text-align: center;
+    line-height: 1.5;
+    letter-spacing: .5px;
+  }
+  
+  .status-bar {
+    padding: 8px 16px;
+    border-top: 1px solid rgba(0,136,255,.3);
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: rgba(255,255,255,.55);
+    letter-spacing: 1px;
+    background: rgba(0,136,255,.03);
+  }
+  .status-bar .ok { color: #00ccff; text-shadow: 0 0 6px #00ccff; }
+  
+  @media (max-width: 600px) {
+    body { padding: 12px; }
+    .card-body { padding: 16px 12px; }
+    .back-btn, .header-btn { width: 30px; height: 30px; font-size: 12px; }
+    .calc-grid { gap: 6px; }
+    .btn { padding: 12px 0; font-size: 12px; }
+    .calc-display { font-size: 22px; }
+    .disclaimer { font-size: 10px; margin-top: 12px; }
+  }
+</style>
+</head>
+<body>
+<canvas id="network"></canvas>
+<div class="glow"></div>
+<div class="circuit-grid"></div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="header-left">
+      <a class="back-btn" href="index.html" aria-label="Volver">←</a>
+      <span class="dot r"></span>
+      <span class="dot y"></span>
+      <span class="dot g"></span>
+    </div>
+    <span class="title" data-i18n="calcSystem">system::calculator</span>
+    <div class="header-right">
+      <button id="langToggle" class="header-btn" aria-label="Cambiar idioma">ES</button>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="calc-container">
+      <div class="calc-screen">
+        <div class="calc-history" id="calcHistory"></div>
+        <div class="calc-display" id="calcDisplay">0</div>
+      </div>
+      
+      <div class="calc-grid">
+        <!-- Fila 1 -->
+        <button class="btn fn" data-val="C">C</button>
+        <button class="btn fn" data-val="back">⌫</button>
+        <button class="btn fn" data-val="(">(</button>
+        <button class="btn fn" data-val=")">)</button>
+        <button class="btn op" data-val="%">%</button>
+        
+        <!-- Fila 2 -->
+        <button class="btn op" data-val="sin">sin</button>
+        <button class="btn op" data-val="cos">cos</button>
+        <button class="btn op" data-val="tan">tan</button>
+        <button class="btn op" data-val="^">^</button>
+        <button class="btn op" data-val="/">/</button>
+        
+        <!-- Fila 3 -->
+        <button class="btn op" data-val="sqrt">√</button>
+        <button class="btn num" data-val="7">7</button>
+        <button class="btn num" data-val="8">8</button>
+        <button class="btn num" data-val="9">9</button>
+        <button class="btn op" data-val="*">×</button>
+        
+        <!-- Fila 4 -->
+        <button class="btn op" data-val="log">log</button>
+        <button class="btn num" data-val="4">4</button>
+        <button class="btn num" data-val="5">5</button>
+        <button class="btn num" data-val="6">6</button>
+        <button class="btn op" data-val="-">-</button>
+        
+        <!-- Fila 5 -->
+        <button class="btn op" data-val="pi">π</button>
+        <button class="btn num" data-val="1">1</button>
+        <button class="btn num" data-val="2">2</button>
+        <button class="btn num" data-val="3">3</button>
+        <button class="btn op" data-val="+">+</button>
+        
+        <!-- Fila 6 -->
+        <button class="btn op" data-val="e">e</button>
+        <button class="btn fn" data-val="pm">±</button>
+        <button class="btn num" data-val="0">0</button>
+        <button class="btn num" data-val=".">.</button>
+        <button class="btn eq" data-val="=">=</button>
+      </div>
+    </div>
+    
+    <div class="disclaimer" data-i18n="disclaimer">
+      Los resultados se redondean a 10 decimales como máximo.
+    </div>
+  </div>
+  <div class="status-bar">
+    <span class="ok" id="statusLabel">&#9679; calc.ready</span>
+    <span>RAD</span>
+    <span>DEC</span>
+  </div>
+</div>
+
+<script>
+  const i18n = {
+    es: {
+      calcSystem: 'sistema::calculadora',
+      pageTitle: 'Calculadora Científica',
+      numError: 'Error de sintaxis',
+      divZero: 'División por cero',
+      invalidInput: 'Valor no válido',
+      disclaimer: 'Los resultados se redondean a 10 decimales como máximo.',
+      statusText: 'calc.lista'
+    },
+    en: {
+      calcSystem: 'system::calculator',
+      pageTitle: 'Scientific Calculator',
+      numError: 'Syntax error',
+      divZero: 'Division by zero',
+      invalidInput: 'Invalid input',
+      disclaimer: 'Results are rounded to 10 decimal places maximum.',
+      statusText: 'calc.ready'
+    }
+  };
+
+  let lang = localStorage.getItem('lang') || 'es';
+  function t(key) { return (i18n[lang] && i18n[lang][key]) || i18n['es'][key] || key; }
+
+  function applyLang() {
+    document.title = t('pageTitle');
+    document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+    langToggle.textContent = lang === 'es' ? 'EN' : 'ES';
+    document.getElementById('statusLabel').innerHTML = '&#9679; ' + t('statusText');
+  }
+
+  const langToggle = document.getElementById('langToggle');
+  langToggle.addEventListener('click', () => {
+    lang = lang === 'es' ? 'en' : 'es';
+    localStorage.setItem('lang', lang);
+    applyLang();
+  });
+
+  // Parser matemático recursivo descentente
+  class Parser {
+    constructor(str) {
+      this.tokens = this.tokenize(str);
+      this.pos = 0;
+    }
+
+    tokenize(str) {
+      // Reconoce números (con o sin decimales), constantes, funciones y operadores de 1 carácter
+      const regex = /\d+(?:\.\d+)?|\.\d+|sqrt|sin|cos|tan|log|pi|e|[+\-*/%^()]/g;
+      return str.match(regex) || [];
+    }
+
+    peek() {
+      return this.tokens[this.pos] || null;
+    }
+
+    consume(expected) {
+      const token = this.peek();
+      if (expected && token !== expected) {
+        throw new Error(`Expected ${expected}`);
+      }
+      this.pos++;
+      return token;
+    }
+
+    parse() {
+      if (this.tokens.length === 0) return 0;
+      const val = this.expr();
+      if (this.pos < this.tokens.length) {
+        throw new Error("Syntax error");
+      }
+      return val;
+    }
+
+    expr() {
+      let val = this.term();
+      while (this.peek() === '+' || this.peek() === '-') {
+        const op = this.consume();
+        const right = this.term();
+        if (op === '+') val += right;
+        else val -= right;
+      }
+      return val;
+    }
+
+    term() {
+      let val = this.factor();
+      while (this.peek() === '*' || this.peek() === '/' || this.peek() === '%') {
+        const op = this.consume();
+        const right = this.factor();
+        if (op === '*') {
+          val *= right;
+        } else if (op === '/') {
+          if (right === 0) throw new Error("Div by 0");
+          val /= right;
+        } else {
+          if (right === 0) throw new Error("Div by 0");
+          val %= right;
+        }
+      }
+      return val;
+    }
+
+    factor() {
+      let val = this.power();
+      if (this.peek() === '^') {
+        this.consume('^');
+        const right = this.factor(); // asociatividad a la derecha
+        val = Math.pow(val, right);
+      }
+      return val;
+    }
+
+    power() {
+      if (this.peek() === '-') {
+        this.consume('-');
+        return -this.power();
+      }
+      if (this.peek() === '+') {
+        this.consume('+');
+        return this.power();
+      }
+      return this.primary();
+    }
+
+    primary() {
+      const token = this.peek();
+      if (!token) throw new Error("Unexpected end");
+
+      if (token === '(') {
+        this.consume('(');
+        const val = this.expr();
+        this.consume(')');
+        return val;
+      }
+
+      if (token === 'sqrt') {
+        this.consume('sqrt');
+        this.consume('(');
+        const val = this.expr();
+        this.consume(')');
+        if (val < 0) throw new Error("Invalid input");
+        return Math.sqrt(val);
+      }
+
+      if (token === 'sin') {
+        this.consume('sin');
+        this.consume('(');
+        const val = this.expr();
+        this.consume(')');
+        return Math.sin(val);
+      }
+
+      if (token === 'cos') {
+        this.consume('cos');
+        this.consume('(');
+        const val = this.expr();
+        this.consume(')');
+        return Math.cos(val);
+      }
+
+      if (token === 'tan') {
+        this.consume('tan');
+        this.consume('(');
+        const val = this.expr();
+        this.consume(')');
+        return Math.tan(val);
+      }
+
+      if (token === 'log') {
+        this.consume('log');
+        this.consume('(');
+        const val = this.expr();
+        this.consume(')');
+        if (val <= 0) throw new Error("Invalid input");
+        return Math.log10(val);
+      }
+
+      if (token === 'pi') {
+        this.consume('pi');
+        return Math.PI;
+      }
+
+      if (token === 'e') {
+        this.consume('e');
+        return Math.E;
+      }
+
+      if (/^\d+(?:\.\d+)?$/.test(token) || /^\.\d+$/.test(token)) {
+        this.consume();
+        return parseFloat(token);
+      }
+
+      throw new Error("Syntax error");
+    }
+  }
+
+  let currentInput = '';
+  let shouldReset = false;
+
+  function handleKey(val) {
+    if (shouldReset) {
+      // Si el display mostraba un resultado/error anterior y presionamos algo nuevo:
+      // Si presionamos un operador, continuamos usando el resultado anterior
+      if (/^[0-9.]$/.test(val) || ['sin', 'cos', 'tan', 'sqrt', 'log', 'pi', 'e', '('].includes(val)) {
+        currentInput = '';
+      }
+      shouldReset = false;
+    }
+
+    if (val === 'C') {
+      currentInput = '';
+      document.getElementById('calcHistory').textContent = '';
+      document.getElementById('calcDisplay').textContent = '0';
+    } else if (val === 'back') {
+      const match = currentInput.match(/(?:sin|cos|tan|log|sqrt)\($/);
+      if (match) {
+        currentInput = currentInput.slice(0, -match[0].length);
+      } else {
+        currentInput = currentInput.slice(0, -1);
+      }
+      updateDisplay();
+    } else if (val === 'pm') {
+      if (currentInput.startsWith('-(') && currentInput.endsWith(')')) {
+        currentInput = currentInput.slice(2, -1);
+      } else if (currentInput) {
+        currentInput = `-(${currentInput})`;
+      } else {
+        currentInput = '-';
+      }
+      updateDisplay();
+    } else if (['sin', 'cos', 'tan', 'log', 'sqrt'].includes(val)) {
+      currentInput += val + '(';
+      updateDisplay();
+    } else if (val === '=') {
+      evaluate();
+    } else {
+      currentInput += val;
+      updateDisplay();
+    }
+  }
+
+  function updateDisplay() {
+    document.getElementById('calcDisplay').textContent = currentInput || '0';
+  }
+
+  function evaluate() {
+    let expr = currentInput.replace(/×/g, '*').replace(/÷/g, '/');
+    if (!expr.trim()) return;
+    try {
+      const parser = new Parser(expr);
+      const result = parser.parse();
+      
+      document.getElementById('calcHistory').textContent = currentInput + ' =';
+      
+      let resultStr;
+      if (isNaN(result) || result === Infinity || result === -Infinity) {
+        resultStr = t('numError');
+      } else {
+        const rounded = parseFloat(result.toFixed(10));
+        resultStr = rounded.toString();
+      }
+      document.getElementById('calcDisplay').textContent = resultStr;
+      currentInput = resultStr;
+      shouldReset = true;
+    } catch (err) {
+      document.getElementById('calcHistory').textContent = currentInput;
+      if (err.message === 'Div by 0') {
+        document.getElementById('calcDisplay').textContent = t('divZero');
+      } else if (err.message === 'Invalid input') {
+        document.getElementById('calcDisplay').textContent = t('invalidInput');
+      } else {
+        document.getElementById('calcDisplay').textContent = t('numError');
+      }
+      shouldReset = true;
+    }
+  }
+
+  // Flash de botón cuando se usa el teclado físico
+  function flashButton(val) {
+    const btn = document.querySelector(`.btn[data-val="${val}"]`);
+    if (btn) {
+      btn.classList.add('active');
+      setTimeout(() => btn.classList.remove('active'), 100);
+    }
+  }
+
+  // Soporte para teclado físico
+  window.addEventListener('keydown', e => {
+    let mappedKey = null;
+    if (e.key === 'Backspace') {
+      mappedKey = 'back';
+    } else if (e.key === 'Escape') {
+      mappedKey = 'C';
+    } else if (e.key === 'Enter') {
+      mappedKey = '=';
+    } else if (e.key === 'p' || e.key === 'P') {
+      mappedKey = 'pi';
+    } else if (e.key === 'e' || e.key === 'E') {
+      mappedKey = 'e';
+    } else if (/^[0-9.+\-*/%^()=]$/.test(e.key)) {
+      mappedKey = e.key;
+    }
+
+    if (mappedKey) {
+      e.preventDefault();
+      handleKey(mappedKey);
+      flashButton(mappedKey);
+    }
+  });
+
+  // Asignar clicks de la interfaz
+  document.querySelectorAll('.btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const val = btn.dataset.val;
+      handleKey(val);
+    });
+  });
+
+  // Carga de idioma
+  const savedLang = localStorage.getItem('lang');
+  if (savedLang === 'en') {
+    lang = 'en';
+  }
+  applyLang();
+
+  // Canvas interactivo de fondo
+  const canvas = document.getElementById('network');
+  const ctx = canvas.getContext('2d');
+  let nodes = [];
+  let mouse = { x: 0, y: 0 };
+  function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; initNodes(); }
+  function initNodes() {
+    nodes = [];
+    const count = Math.floor((canvas.width * canvas.height) / 25000);
+    for (let i = 0; i < count; i++) { nodes.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, vx: (Math.random() - .5) * .3, vy: (Math.random() - .5) * .3, r: Math.random() * 2 + 1 }); }
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+  function draw() {
+    ctx.fillStyle = 'rgba(8, 12, 28, .15)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    for (let i = 0; i < nodes.length; i++) {
+      const n = nodes[i]; n.x += n.vx; n.y += n.vy;
+      if (n.x < 0 || n.x > canvas.width) n.vx *= -1;
+      if (n.y < 0 || n.y > canvas.height) n.vy *= -1;
+      const dx = mouse.x - n.x; const dy = mouse.y - n.y; const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 150) { n.x -= dx * .005; n.y -= dy * .005; }
+      for (let j = i + 1; j < nodes.length; j++) {
+        const m = nodes[j]; const dx = n.x - m.x; const dy = n.y - m.y; const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 120) {
+          ctx.strokeStyle = `rgba(0, 136, 255, ${(1 - dist / 120) * .3})`;
+          ctx.lineWidth = .5; ctx.beginPath(); ctx.moveTo(n.x, n.y); ctx.lineTo(m.x, m.y); ctx.stroke();
+        }
+      }
+      ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(0, 136, 255, ${n.r / 3})`; ctx.shadowColor = '#0088ff'; ctx.shadowBlur = 6; ctx.fill(); ctx.shadowBlur = 0;
+    }
+  }
+  setInterval(draw, 30);
+</script>
+</body>
+</html>
